@@ -1,17 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
+	"os"
 	"spotify-relation/repository"
+	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-// type Test struct {
-// 	Name string `json:"name"`
-// 	Age  uint   `json:"age"`
-// }
 
 func main() {
 
@@ -30,6 +28,19 @@ func main() {
 
 	artistRepository := repository.NewArtistRepositorySQLiteDB(db)
 	_ = artistRepository
+
+	imageRepository := repository.NewImageRepositorySQLiteDB(db)
+	_ = imageRepository
+
+	// "Image: Add"
+	// err = imageRepository.Add(&repository.Image{
+	// 	Height: 1,
+	// 	Width:  1,
+	// 	Url:    "url.com",
+	// })
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// "Create"
 	// a, err := artistRepository.GetById("hhh")
@@ -66,35 +77,40 @@ func main() {
 	// }
 
 	// "Open test file"
-	// file, err := os.Open("data/test_duplicate_update.json")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	file, err := os.Open("data/test_duplicate_update.json")
+	if err != nil {
+		panic(err)
+	}
 
-	// recentlyPlayedRecords := &model.RecentlyPlayedRecords{}
+	recentlyPlayedRecords := &source.RecentlyPlayedRecords{}
 
-	// jsonParser := json.NewDecoder(file)
-	// if err = jsonParser.Decode(&recentlyPlayedRecords); err != nil {
-	// 	log.Fatal("parsing config file", err.Error())
-	// }
+	jsonParser := json.NewDecoder(file)
+	if err = jsonParser.Decode(&recentlyPlayedRecords); err != nil {
+		log.Fatal("parsing config file", err.Error())
+	}
 
-	// // fmt.Printf("%v \n", recentlyPlayedRecords.Items[0].Track)
+	// fmt.Printf("%v \n", recentlyPlayedRecords.Items[0].Track)
 
-	// for _, activity := range recentlyPlayedRecords.Items {
-	// 	// fmt.Printf("%v\n\n", activity)
+	for _, activity := range recentlyPlayedRecords.Items {
+		// fmt.Printf("%v\n\n", activity)
 
-	// 	artists := []db.Artist{}
-	// 	for _, a := range activity.Track.Artists {
-	// 		_artist := db.Artist{
-	// 			Href:        a.Href,
-	// 			ID:          a.ID,
-	// 			Name:        a.Name,
-	// 			ExternalUrl: a.ExternalUrls.Spotify,
-	// 		}
-	// 		artists = append(artists, _artist)
-	// 		fmt.Printf("%v\n", _artist)
+		// artists := []db.Artist{}
+		for _, a := range activity.Track.Artists {
+			err = artistRepository.Create(&a)
+			if err != nil {
+				log.Fatal(err)
+			}
+			break
 
-	// 	}
+			// _artist := repository.Artist{
+			// 	ID:          a.ID,
+			// 	Name:        a.Name,
+			// 	ExternalUrl: a.ExternalUrls.Spotify,
+			// }
+			// artists = append(artists, _artist)
+			// fmt.Printf("%v\n", _artist)
 
-	// }
+		}
+
+	}
 }

@@ -17,7 +17,16 @@ func migrate() {
 		log.Fatal(err)
 	}
 
-	if err := db.AutoMigrate(&repository.Artist{}); err != nil {
+	if err := db.AutoMigrate(
+		&repository.Activity{},
+		&repository.Album{},
+		&repository.AlbumImages{},
+		&repository.AlbumArtists{},
+		&repository.Artist{},
+		&repository.Image{},
+		&repository.Track{},
+		&repository.TrackArtists{},
+	); err != nil {
 		panic(err)
 	}
 

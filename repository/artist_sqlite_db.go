@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -49,34 +51,34 @@ func (a artistRepositorySQLiteDB) GetById(artistId string) (*Artist, error) {
 	}
 	return &artist, nil
 }
-func (a artistRepositorySQLiteDB) Create(artist *Artist) error {
+func (a artistRepositorySQLiteDB) Create(artist *source.Artist) error {
+	_, err := a.GetById(artist.ID)
+	if err == nil {
+		// return nil
+		return errors.New("Data already exists.")
+	}
 	query := `
 	INSERT INTO artists (
 		id
 		, name
 		, external_url
-	) VALUES (
-		:id
-		, :name
-		, :externalurl
-	)`
-
-	_, err := a.db.NamedExec(query, artist)
+	) VALUES ( ?, ?, ? )`
+	_, err = a.db.Exec(query, artist.ID, artist.Name, artist.ExternalUrls.Spotify)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (a artistRepositorySQLiteDB) Update(artist *Artist) error {
-	query := `UPDATE artists SET
-		external_url = :external_url
-		, name = :name
-		WHERE id = :id
-		`
+func (a artistRepositorySQLiteDB) Update(artist *source.Artist) error {
+	query := `
+	UPDATE artists SET
+		external_url = ?
+		, name = ?
+	WHERE id = ?`
 	// , updated_at = :updated_at
 	// artist.UpdatedAt = time.Now()
 	fmt.Printf("to update:\n%v", artist)
-	_, err := a.db.NamedExec(query, artist)
+	_, err := a.db.Exec(query, artist.ExternalUrls.Spotify, artist.Name, artist.ID)
 	if err != nil {
 		return err
 	}
