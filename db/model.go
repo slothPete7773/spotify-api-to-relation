@@ -21,7 +21,6 @@ type Album struct {
 }
 
 type Artist struct {
-	Href        string `db:"href"`
 	ID          string `db:"id"`
 	Name        string `db:"name"`
 	ExternalUrl string `db:"external_url"`
