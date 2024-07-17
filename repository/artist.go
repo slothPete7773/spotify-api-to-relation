@@ -20,4 +20,5 @@ type ArtistRepository interface {
 	GetById(string) (*Artist, error)
 	Create(*source.Artist) error
 	Update(*source.Artist) error
+	IsExists(string) bool
 }

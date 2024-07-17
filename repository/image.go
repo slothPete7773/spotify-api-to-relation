@@ -1,6 +1,9 @@
 package repository
 
-import "time"
+import (
+	"spotify-relation/source"
+	"time"
+)
 
 type Image struct {
 	Height    int        `db:"height"`
@@ -12,5 +15,6 @@ type Image struct {
 }
 
 type ImageRepository interface {
-	Add(*Image) error
+	Add(*source.Image) error
+	IsExists(string) bool
 }

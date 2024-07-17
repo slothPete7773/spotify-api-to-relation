@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"spotify-relation/repository"
@@ -32,50 +33,6 @@ func main() {
 	imageRepository := repository.NewImageRepositorySQLiteDB(db)
 	_ = imageRepository
 
-	// "Image: Add"
-	// err = imageRepository.Add(&repository.Image{
-	// 	Height: 1,
-	// 	Width:  1,
-	// 	Url:    "url.com",
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// "Create"
-	// a, err := artistRepository.GetById("hhh")
-	// err = artistRepository.Create(&repository.Artist{
-	// 	ID:          "hello-id",
-	// 	Name:        "Veerakit",
-	// 	ExternalUrl: "url-veera.co",
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// "GetAll"
-	// artists, err := artistRepository.GetAll()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// for _, a := range artists {
-	// 	fmt.Printf("%v \n", a)
-	// }
-
-	// "GetById"
-	// a, err := artistRepository.GetById("hello-id")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Printf("%v \n", a)
-
-	// "Update"
-	// a.Name = "slothpete"
-	// err = artistRepository.Update(a)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	// "Open test file"
 	file, err := os.Open("data/test_duplicate_update.json")
 	if err != nil {
@@ -96,9 +53,23 @@ func main() {
 
 		// artists := []db.Artist{}
 		for _, a := range activity.Track.Artists {
-			err = artistRepository.Create(&a)
-			if err != nil {
-				log.Fatal(err)
+			if isArtistAlreadyExist := artistRepository.IsExists(a.ID); isArtistAlreadyExist == false {
+				fmt.Printf("Artist ID: %v is not exists, creating...\n", a.ID)
+				err = artistRepository.Create(&a)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			for _, img := range activity.Track.Album.Images {
+				if isImgUrlAlreadyExists := imageRepository.IsExists(img.URL); isImgUrlAlreadyExists == false {
+					fmt.Printf("Image url: %v is not exists, creating...\n", img.URL)
+					err = imageRepository.Add(&img)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+
 			}
 			break
 
@@ -114,3 +85,47 @@ func main() {
 
 	}
 }
+
+// "Image: Add"
+// err = imageRepository.Add(&repository.Image{
+// 	Height: 1,
+// 	Width:  1,
+// 	Url:    "url.com",
+// })
+// if err != nil {
+// 	log.Fatal(err)
+// }
+
+// "Create"
+// a, err := artistRepository.GetById("hhh")
+// err = artistRepository.Create(&repository.Artist{
+// 	ID:          "hello-id",
+// 	Name:        "Veerakit",
+// 	ExternalUrl: "url-veera.co",
+// })
+// if err != nil {
+// 	log.Fatal(err)
+// }
+
+// "GetAll"
+// artists, err := artistRepository.GetAll()
+// if err != nil {
+// 	log.Fatal(err)
+// }
+// for _, a := range artists {
+// 	fmt.Printf("%v \n", a)
+// }
+
+// "GetById"
+// a, err := artistRepository.GetById("hello-id")
+// if err != nil {
+// 	log.Fatal(err)
+// }
+// fmt.Printf("%v \n", a)
+
+// "Update"
+// a.Name = "slothpete"
+// err = artistRepository.Update(a)
+// if err != nil {
+// 	log.Fatal(err)
+// }

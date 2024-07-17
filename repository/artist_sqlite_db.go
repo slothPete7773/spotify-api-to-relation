@@ -19,6 +19,23 @@ func NewArtistRepositorySQLiteDB(db *sqlx.DB) ArtistRepository {
 	}
 }
 
+func (a artistRepositorySQLiteDB) IsExists(artistId string) bool {
+	artist := Artist{}
+	query := `
+		SELECT 
+			id
+		FROM artists
+		WHERE id = ?
+		`
+	err := a.db.Get(&artist, query, artistId)
+	if err != nil {
+		return false
+	}
+
+	// return artists, nil
+	return true
+}
+
 func (a artistRepositorySQLiteDB) GetAll() ([]Artist, error) {
 	artists := []Artist{}
 	err := a.db.Select(&artists, `
