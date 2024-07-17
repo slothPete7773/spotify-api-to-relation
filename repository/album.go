@@ -24,7 +24,9 @@ type AlbumRepository interface {
 
 type AlbumArtists struct {
 	AlbumId   string     `db:"album_id" gorm:"primaryKey"`
+	Album     Album      `gorm:"foreignKey:AlbumId"`
 	ArtistId  string     `db:"artist_id" gorm:"primaryKey"`
+	Artist    Artist     `gorm:"foreignKey:ArtistId"`
 	CreatedAt *time.Time `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
 	DeletedAt *time.Time `db:"deleted_at"`
@@ -32,7 +34,9 @@ type AlbumArtists struct {
 
 type AlbumImages struct {
 	AlbumId   string     `db:"album_id" gorm:"primaryKey"`
+	Album     Album      `gorm:"foreignKey:AlbumId"`
 	ImageId   string     `db:"image_id" gorm:"primaryKey"`
+	Image     Image      `gorm:"foreignKey:ImageId"`
 	CreatedAt *time.Time `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
 	DeletedAt *time.Time `db:"deleted_at"`

@@ -13,7 +13,8 @@ type Track struct {
 	Popularity  int    `db:"popularity"`
 	PreviewURL  string `db:"preview_url"`
 	TrackNumber int    `db:"track_number"`
-	// Album       Album    `db:"album"`
+	AlbumId     string `db:"album_id"`
+	Album       Album  `gorm:"foreignKey:AlbumId"`
 	// Artists     []Artist `db:"artists"`
 }
 
@@ -26,7 +27,9 @@ type TrackRepository interface {
 
 type TrackArtists struct {
 	TrackId   string     `db:"track_id" gorm:"primaryKey"`
+	Track     Track      `gorm:"foreignKey:TrackId"`
 	ArtistId  string     `db:"artist_id" gorm:"primaryKey"`
+	Artist    Artist     `gorm:"foreignKey:ArtistId"`
 	CreatedAt *time.Time `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
 	DeletedAt *time.Time `db:"deleted_at"`
