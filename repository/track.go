@@ -23,6 +23,7 @@ type TrackRepository interface {
 	GetById()
 	Create()
 	Update()
+	IsExists()
 }
 
 type TrackArtists struct {

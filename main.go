@@ -33,6 +33,9 @@ func main() {
 	imageRepository := repository.NewImageRepositorySQLiteDB(db)
 	_ = imageRepository
 
+	albumRepository := repository.NewAlbumRepositoryDB(db)
+	_ = albumRepository
+
 	// "Open test file"
 	file, err := os.Open("data/test_duplicate_update.json")
 	if err != nil {
@@ -52,36 +55,41 @@ func main() {
 		// fmt.Printf("%v\n\n", activity)
 
 		// artists := []db.Artist{}
-		for _, a := range activity.Track.Artists {
-			if isArtistAlreadyExist := artistRepository.IsExists(a.ID); isArtistAlreadyExist == false {
-				fmt.Printf("Artist ID: %v is not exists, creating...\n", a.ID)
-				err = artistRepository.Create(&a)
+		for _, artist := range activity.Track.Artists {
+			if isArtistAlreadyExist := artistRepository.IsExists(artist.ID); isArtistAlreadyExist == false {
+				fmt.Printf("Artist ID: %v is not exists, creating...\n", artist.ID)
+				err = artistRepository.Create(&artist)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+
+		for _, img := range activity.Track.Album.Images {
+			if isImgUrlAlreadyExists := imageRepository.IsExists(img.URL); isImgUrlAlreadyExists == false {
+				fmt.Printf("Image url: %v is not exists, creating...\n", img.URL)
+				err = imageRepository.Add(&img)
 				if err != nil {
 					log.Fatal(err)
 				}
 			}
 
-			for _, img := range activity.Track.Album.Images {
-				if isImgUrlAlreadyExists := imageRepository.IsExists(img.URL); isImgUrlAlreadyExists == false {
-					fmt.Printf("Image url: %v is not exists, creating...\n", img.URL)
-					err = imageRepository.Add(&img)
-					if err != nil {
-						log.Fatal(err)
-					}
-				}
-
-			}
-			break
-
-			// _artist := repository.Artist{
-			// 	ID:          a.ID,
-			// 	Name:        a.Name,
-			// 	ExternalUrl: a.ExternalUrls.Spotify,
-			// }
-			// artists = append(artists, _artist)
-			// fmt.Printf("%v\n", _artist)
-
 		}
+
+		err = albumRepository.Create(&activity.Track.Album)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		break
+
+		// _artist := repository.Artist{
+		// 	ID:          a.ID,
+		// 	Name:        a.Name,
+		// 	ExternalUrl: a.ExternalUrls.Spotify,
+		// }
+		// artists = append(artists, _artist)
+		// fmt.Printf("%v\n", _artist)
 
 	}
 }

@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"spotify-relation/source"
 
@@ -69,18 +68,13 @@ func (a artistRepositorySQLiteDB) GetById(artistId string) (*Artist, error) {
 	return &artist, nil
 }
 func (a artistRepositorySQLiteDB) Create(artist *source.Artist) error {
-	_, err := a.GetById(artist.ID)
-	if err == nil {
-		// return nil
-		return errors.New("Data already exists.")
-	}
 	query := `
 	INSERT INTO artists (
 		id
 		, name
 		, external_url
 	) VALUES ( ?, ?, ? )`
-	_, err = a.db.Exec(query, artist.ID, artist.Name, artist.ExternalUrls.Spotify)
+	_, err := a.db.Exec(query, artist.ID, artist.Name, artist.ExternalUrls.Spotify)
 	if err != nil {
 		return err
 	}

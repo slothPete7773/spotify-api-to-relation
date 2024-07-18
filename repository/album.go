@@ -1,6 +1,9 @@
 package repository
 
-import "time"
+import (
+	"spotify-relation/source"
+	"time"
+)
 
 type Album struct {
 	ID                   string     `db:"id"`
@@ -16,10 +19,11 @@ type Album struct {
 }
 
 type AlbumRepository interface {
-	GetAll()
-	GetById()
-	Create()
-	Update()
+	GetAll() ([]Album, error)
+	GetById(string) (*Album, error)
+	Create(*source.Album) error
+	Update(*source.Album) error
+	IsExists(string) bool
 }
 
 type AlbumArtists struct {
