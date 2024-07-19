@@ -137,6 +137,7 @@ func (a albumRepositoryDB) Update(album *source.Album) error {
 		album.ReleaseDatePrecision,
 		album.TotalTracks,
 		album.ExternalUrls.Spotify,
+		album.ID,
 	)
 	if err != nil {
 		return err
