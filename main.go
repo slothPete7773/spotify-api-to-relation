@@ -38,6 +38,10 @@ func main() {
 
 	trackRepository := repository.NewTrackRepositoryDB(db)
 	_ = trackRepository
+
+	activityRepository := repository.NewActivityRepositoryDB(db)
+	_ = activityRepository
+
 	// "Open test file"
 	file, err := os.Open("data/test_duplicate_update.json")
 	if err != nil {
@@ -96,7 +100,16 @@ func main() {
 			}
 		}
 
-		break
+		if isActivityExists := activityRepository.IsExists(activity.PlayedAt); isActivityExists == false {
+			fmt.Printf("Activity at %v is not exists, inserting..\n", isActivityExists)
+			err = activityRepository.Create(&activity)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		// if isActivityExists :=
+		// break
 
 		// _artist := repository.Artist{
 		// 	ID:          a.ID,

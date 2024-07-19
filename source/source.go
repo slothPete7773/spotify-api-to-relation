@@ -67,7 +67,7 @@ type Context struct {
 	URI          string      `json:"uri"`
 }
 
-type Item struct {
+type Activity struct {
 	Track    Track     `json:"track"`
 	PlayedAt time.Time `json:"played_at"`
 	Context  Context   `json:"context"`
@@ -78,9 +78,9 @@ type Cursors struct {
 	Before string `json:"before"`
 }
 type RecentlyPlayedRecords struct {
-	Items   []Item  `json:"items"`
-	Next    string  `json:"next"`
-	Cursors Cursors `json:"cursors"`
-	Limit   int     `json:"limit"`
-	Href    string  `json:"href"`
+	Items   []Activity `json:"items"`
+	Next    string     `json:"next"`
+	Cursors Cursors    `json:"cursors"`
+	Limit   int        `json:"limit"`
+	Href    string     `json:"href"`
 }
