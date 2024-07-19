@@ -36,6 +36,8 @@ func main() {
 	albumRepository := repository.NewAlbumRepositoryDB(db)
 	_ = albumRepository
 
+	trackRepository := repository.NewTrackRepositoryDB(db)
+	_ = trackRepository
 	// "Open test file"
 	file, err := os.Open("data/test_duplicate_update.json")
 	if err != nil {
@@ -76,9 +78,22 @@ func main() {
 
 		}
 
-		err = albumRepository.Create(&activity.Track.Album)
-		if err != nil {
-			log.Fatal(err)
+		// fmt.Printf("Album ID: %v", activity.Track.Album.ID)
+		if isAlbumAlreadyExists := albumRepository.IsExists(activity.Track.Album.ID); isAlbumAlreadyExists == false {
+			fmt.Printf("Album ID: %v is not exists, creating...\n", activity.Track.Album.ID)
+			err = albumRepository.Create(&activity.Track.Album)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		}
+
+		if isTrackAlreadyExists := trackRepository.IsExists(activity.Track.ID); isTrackAlreadyExists == false {
+			fmt.Printf("Track ID: %v is not exists, creating...\n", activity.Track.ID)
+			err = trackRepository.Create(&activity.Track)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		break
