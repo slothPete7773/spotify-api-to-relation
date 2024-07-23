@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
@@ -78,7 +77,6 @@ func (a albumRepositoryDB) Create(album *source.Album) error {
 	)
 
 	for _, artist := range album.Artists {
-		fmt.Printf("%v\n", artist)
 		query := `
 	INSERT INTO album_artists (
 		album_id
@@ -95,7 +93,6 @@ func (a albumRepositoryDB) Create(album *source.Album) error {
 	}
 
 	for _, img := range album.Images {
-		fmt.Printf("%v\n", img)
 		query := `
 	INSERT INTO album_images (
 		album_id
@@ -126,9 +123,6 @@ func (a albumRepositoryDB) Update(album *source.Album) error {
 		, total_tracks = ?
 		, external_url = ?
 	WHERE id = ?`
-	// , updated_at = :updated_at
-	// artist.UpdatedAt = time.Now()
-	// fmt.Printf("to update:\n%v", artist)
 	_, err := a.db.Exec(
 		query,
 		album.Name,
@@ -157,6 +151,5 @@ func (a albumRepositoryDB) IsExists(albumId string) bool {
 		return false
 	}
 
-	// return artists, nil
 	return true
 }

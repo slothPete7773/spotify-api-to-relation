@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
@@ -44,7 +43,6 @@ func (i imageRepositorySQLiteDB) Add(img *source.Image) error {
 		, ?
 	)`
 
-	fmt.Printf("img: %v\n", img)
 	_, err := i.db.Exec(query, img.Height, img.Width, img.URL)
 	if err != nil {
 		return err

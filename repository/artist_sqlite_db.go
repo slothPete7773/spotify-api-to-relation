@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
@@ -12,7 +11,6 @@ type artistRepositorySQLiteDB struct {
 }
 
 func NewArtistRepositorySQLiteDB(db *sqlx.DB) ArtistRepository {
-	// TODO: To implement.
 	return artistRepositorySQLiteDB{
 		db: db,
 	}
@@ -31,7 +29,6 @@ func (a artistRepositorySQLiteDB) IsExists(artistId string) bool {
 		return false
 	}
 
-	// return artists, nil
 	return true
 }
 
@@ -86,9 +83,6 @@ func (a artistRepositorySQLiteDB) Update(artist *source.Artist) error {
 		external_url = ?
 		, name = ?
 	WHERE id = ?`
-	// , updated_at = :updated_at
-	// artist.UpdatedAt = time.Now()
-	fmt.Printf("to update:\n%v", artist)
 	_, err := a.db.Exec(query, artist.ExternalUrls.Spotify, artist.Name, artist.ID)
 	if err != nil {
 		return err
