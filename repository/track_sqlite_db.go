@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
@@ -12,6 +13,42 @@ type trackRepositoryDB struct {
 
 func NewTrackRepositoryDB(db *sqlx.DB) TrackRepository {
 	return trackRepositoryDB{db: db}
+}
+
+func (t trackRepositoryDB) IsSameWithExisting(sTrack *source.Track, eTrack *Track) bool {
+
+	return (sTrack.ExternalUrls.Spotify == eTrack.ExternalUrl) &&
+		(sTrack.Explicit == eTrack.Explicit) &&
+		(sTrack.IsLocal == eTrack.IsLocal) &&
+		(sTrack.Popularity == eTrack.Popularity)
+}
+
+func (t trackRepositoryDB) Upsert(track *source.Track) error {
+	// Check if the track already exists
+	existingTrack, err := t.GetById(track.ID)
+	_ = existingTrack
+
+	if err != nil && err.Error() != "sql: no rows in result set" {
+		return nil
+	}
+
+	if err != nil && err.Error() == "sql: no rows in result set" {
+		err = t.Create(track)
+		if err != nil {
+			return fmt.Errorf("error creating track: %v", err)
+		}
+	} else {
+		if t.IsSameWithExisting(track, existingTrack) == false {
+			err = t.Update(track)
+			if err != nil {
+				return fmt.Errorf("error updating track: %v", err)
+			}
+			fmt.Printf("Updated Track ID: %v\n", track.ID)
+		}
+
+	}
+
+	return nil
 }
 
 func (t trackRepositoryDB) GetAll() ([]Track, error) {

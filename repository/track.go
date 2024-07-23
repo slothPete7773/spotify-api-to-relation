@@ -30,6 +30,8 @@ type TrackRepository interface {
 	Create(*source.Track) error
 	Update(*source.Track) error
 	IsExists(string) bool
+	Upsert(*source.Track) error
+	IsSameWithExisting(*source.Track, *Track) bool
 }
 
 type TrackArtists struct {
