@@ -9,41 +9,54 @@ import (
 	"spotify-relation/source"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	// _ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-
-	db, err := sqlx.Open("sqlite3", "./spotify_data.db?mode=rwc")
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error opening database: %v", err)
+		log.Fatal("Error loading .env file")
 	}
-	defer db.Close()
 
+	// DB: Sqlite3
+	// db, err := sqlx.Open("sqlite3", "./spotify_data.db?mode=rwc")
+
+	// DB: Postgres
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", os.Getenv("PG_USERNAME"), os.Getenv("PG_PASSWORD"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_DATABASE"))
+	db, err := sqlx.Open("postgres", dsn)
+	if err != nil {
+		panic(err)
+	}
+	if err := db.Ping(); err != nil {
+		log.Fatal(err.Error())
+	}
 	migrate()
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatalf("Error pinging database: %v", err)
-	}
-
-	artistRepository := repository.NewArtistRepositorySQLiteDB(db)
+	// artistRepository := repository.NewArtistRepositorySQLiteDB(db)
+	artistRepository := repository.NewArtistRepositorySQLitePgDB(db)
 	_ = artistRepository
 
-	imageRepository := repository.NewImageRepositorySQLiteDB(db)
+	// imageRepository := repository.NewImageRepositorySQLiteDB(db)
+	imageRepository := repository.NewImageRepositorySQLitePgDB(db)
 	_ = imageRepository
 
-	albumRepository := repository.NewAlbumRepositoryDB(db)
+	// albumRepository := repository.NewAlbumRepositoryDB(db)
+	albumRepository := repository.NewAlbumRepositoryPgDB(db)
 	_ = albumRepository
 
-	trackRepository := repository.NewTrackRepositoryDB(db)
+	// trackRepository := repository.NewTrackRepositoryDB(db)
+	trackRepository := repository.NewTrackRepositoryPgDB(db)
 	_ = trackRepository
 
-	activityRepository := repository.NewActivityRepositoryDB(db)
+	// activityRepository := repository.NewActivityRepositoryDB(db)
+	activityRepository := repository.NewActivityRepositoryPgDB(db)
 	_ = activityRepository
 
 	// "Open test file"
 	// file, err := os.Open("data/test_duplicate_update.json")
+	// file, err := os.Open("data/test_single.json")
 	file, err := os.Open("data/1716023519_spotify_recent_50.json")
 	if err != nil {
 		panic(err)
@@ -57,6 +70,7 @@ func main() {
 	}
 
 	for _, activity := range recentlyPlayedRecords.Items {
+
 		for _, artist := range activity.Track.Artists {
 			if isArtistAlreadyExist := artistRepository.IsExists(artist.ID); isArtistAlreadyExist == false {
 				fmt.Printf("Artist ID: %v is not exists, creating...\n", artist.ID)
@@ -85,14 +99,6 @@ func main() {
 				log.Fatal(err)
 			}
 
-		}
-
-		if isTrackAlreadyExists := trackRepository.IsExists(activity.Track.ID); isTrackAlreadyExists == false {
-			fmt.Printf("Track ID: %v is not exists, creating...\n", activity.Track.ID)
-			err = trackRepository.Create(&activity.Track)
-			if err != nil {
-				log.Fatal(err)
-			}
 		}
 
 		trackRepository.Upsert(&activity.Track)

@@ -1,2 +1,5 @@
 # local test db
 *.db
+
+# Credential
+.env
