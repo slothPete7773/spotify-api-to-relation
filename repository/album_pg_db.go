@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"spotify-relation/source"
 	"time"
 
@@ -82,26 +81,6 @@ func (a albumRepositoryPgDB) Create(album *source.Album) error {
 	)
 	if err != nil {
 		return err
-	}
-
-	for _, artist := range album.Artists {
-		fmt.Printf("AlbumID: %v\nArtistID: %v\n", album.ID, artist.ID)
-		query := `
-	INSERT INTO album_artists (
-		album_id
-		, artist_id
-		, created_at
-		, updated_at
-	) VALUES ( $1, $2, $3, $3)`
-		_, err := a.db.Exec(
-			query,
-			album.ID,
-			artist.ID,
-			time.Now(),
-		)
-		if err != nil {
-			return err
-		}
 	}
 
 	for _, img := range album.Images {
