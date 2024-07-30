@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"spotify-relation/repository"
 	"spotify-relation/source"
 
@@ -15,9 +17,18 @@ import (
 )
 
 func main() {
+
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
+	}
+	jsonFiles, err := ListAllJson(os.Getenv("LANDING_DIRECTORY"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, filename := range jsonFiles {
+		fmt.Printf("%v\n", filename)
 	}
 
 	// DB: Sqlite3
@@ -54,62 +65,80 @@ func main() {
 	activityRepository := repository.NewActivityRepositoryPgDB(db)
 	_ = activityRepository
 
-	// "Open test file"
-	// file, err := os.Open("data/test_duplicate_update.json")
-	// file, err := os.Open("data/test_single.json")
-	file, err := os.Open("data/1716023519_spotify_recent_50.json")
+	for _, filename := range jsonFiles {
+
+		file, err := os.Open(filename)
+		if err != nil {
+			panic(err)
+		}
+
+		recentlyPlayedRecords := &source.RecentlyPlayedRecords{}
+
+		jsonParser := json.NewDecoder(file)
+		if err = jsonParser.Decode(&recentlyPlayedRecords); err != nil {
+			log.Fatal("parsing config file", err.Error())
+		}
+
+		for i, activity := range recentlyPlayedRecords.Items {
+			fmt.Printf("[%v] Activity at %v\n", i, activity.PlayedAt)
+
+			for _, artist := range activity.Track.Artists {
+				if isArtistAlreadyExist := artistRepository.IsExists(artist.ID); isArtistAlreadyExist == false {
+					// fmt.Printf("Artist ID: %v is not exists, creating...\n", artist.ID)
+					err = artistRepository.Create(&artist)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+			}
+
+			for _, img := range activity.Track.Album.Images {
+				if isImgUrlAlreadyExists := imageRepository.IsExists(img.URL); isImgUrlAlreadyExists == false {
+					// fmt.Printf("Image url: %v is not exists, creating...\n", img.URL)
+					err = imageRepository.Add(&img)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+
+			}
+
+			if isAlbumAlreadyExists := albumRepository.IsExists(activity.Track.Album.ID); isAlbumAlreadyExists == false {
+				// fmt.Printf("Album ID: %v is not exists, creating...\n", activity.Track.Album.ID)
+				err = albumRepository.Create(&activity.Track.Album)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+			}
+
+			trackRepository.Upsert(&activity.Track)
+
+			if isActivityExists := activityRepository.IsExists(activity.PlayedAt); isActivityExists == false {
+				// fmt.Printf("[%v] Activity at %v is not exists, inserting..\n", i, activity.PlayedAt)
+
+				err = activityRepository.Create(&activity)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
+		}
+	}
+}
+
+func ListAllJson(target_directory string) ([]string, error) {
+	filepaths := []string{}
+
+	err := filepath.WalkDir(target_directory, func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() && filepath.Ext(path) == ".json" {
+			filepaths = append(filepaths, path)
+		}
+		return nil
+	})
 	if err != nil {
-		panic(err)
+		return nil, err
+		// log.Fatal(err)
 	}
-
-	recentlyPlayedRecords := &source.RecentlyPlayedRecords{}
-
-	jsonParser := json.NewDecoder(file)
-	if err = jsonParser.Decode(&recentlyPlayedRecords); err != nil {
-		log.Fatal("parsing config file", err.Error())
-	}
-
-	for _, activity := range recentlyPlayedRecords.Items {
-
-		for _, artist := range activity.Track.Artists {
-			if isArtistAlreadyExist := artistRepository.IsExists(artist.ID); isArtistAlreadyExist == false {
-				fmt.Printf("Artist ID: %v is not exists, creating...\n", artist.ID)
-				err = artistRepository.Create(&artist)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		}
-
-		for _, img := range activity.Track.Album.Images {
-			if isImgUrlAlreadyExists := imageRepository.IsExists(img.URL); isImgUrlAlreadyExists == false {
-				fmt.Printf("Image url: %v is not exists, creating...\n", img.URL)
-				err = imageRepository.Add(&img)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-
-		}
-
-		if isAlbumAlreadyExists := albumRepository.IsExists(activity.Track.Album.ID); isAlbumAlreadyExists == false {
-			fmt.Printf("Album ID: %v is not exists, creating...\n", activity.Track.Album.ID)
-			err = albumRepository.Create(&activity.Track.Album)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-		}
-
-		trackRepository.Upsert(&activity.Track)
-
-		if isActivityExists := activityRepository.IsExists(activity.PlayedAt); isActivityExists == false {
-			fmt.Printf("Activity at %v is not exists, inserting..\n", isActivityExists)
-			err = activityRepository.Create(&activity)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-	}
+	return filepaths, nil
 }
