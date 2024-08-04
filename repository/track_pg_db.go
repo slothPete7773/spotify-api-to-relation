@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"spotify-relation/source"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -113,7 +114,9 @@ func (t trackRepositoryPgDB) Create(track *source.Track) error {
 		, preview_url
 		, track_number
 		, album_id
-	) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		, created_at
+		, updated_at
+	) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
 	`
 	_, err := t.db.Exec(
 		query,
@@ -128,6 +131,7 @@ func (t trackRepositoryPgDB) Create(track *source.Track) error {
 		track.PreviewURL,
 		track.TrackNumber,
 		track.Album.ID,
+		time.Now(),
 	)
 	if err != nil {
 		return err
@@ -159,7 +163,8 @@ func (t trackRepositoryPgDB) Update(track *source.Track) error {
 		, popularity = $7
 		, preview_url = $8
 		, track_number = $9
-	WHERE id = $10
+		, updated_at = $10
+	WHERE id = $11
 		`
 	// album_id
 	_, err := t.db.Exec(
@@ -173,6 +178,7 @@ func (t trackRepositoryPgDB) Update(track *source.Track) error {
 		track.Popularity,
 		track.PreviewURL,
 		track.TrackNumber,
+		time.Now(),
 		track.ID,
 	)
 	if err != nil {
