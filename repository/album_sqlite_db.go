@@ -76,22 +76,6 @@ func (a albumRepositoryDB) Create(album *source.Album) error {
 		album.ExternalUrls.Spotify,
 	)
 
-	for _, artist := range album.Artists {
-		query := `
-	INSERT INTO album_artists (
-		album_id
-		, artist_id
-	) VALUES ( ?, ?)`
-		_, err := a.db.Exec(
-			query,
-			album.ID,
-			artist.ID,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
 	for _, img := range album.Images {
 		query := `
 	INSERT INTO album_images (
