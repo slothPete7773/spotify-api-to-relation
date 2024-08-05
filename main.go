@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"spotify-relation/repository"
 	"spotify-relation/source"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -32,11 +33,10 @@ func main() {
 	}
 
 	// DB: Sqlite3
-	// db, err := sqlx.Open("sqlite3", "./spotify_data.db?mode=rwc")
-
+	db, err := sqlx.Open("sqlite3", "./spotify_data.db?mode=rwc")
 	// DB: Postgres
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", os.Getenv("PG_USERNAME"), os.Getenv("PG_PASSWORD"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_DATABASE"))
-	db, err := sqlx.Open("postgres", dsn)
+	// dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", os.Getenv("PG_USERNAME"), os.Getenv("PG_PASSWORD"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_DATABASE"))
+	// db, err := sqlx.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -65,9 +65,10 @@ func main() {
 	activityRepository := repository.NewActivityRepositoryPgDB(db)
 	_ = activityRepository
 
-	for _, filename := range jsonFiles {
+	for _, filepath := range jsonFiles {
 
-		file, err := os.Open(filename)
+		file, err := os.Open(filepath)
+
 		if err != nil {
 			panic(err)
 		}
@@ -124,6 +125,16 @@ func main() {
 			}
 
 		}
+
+		temp_filepath := strings.Split(filepath, "/")
+		filename := temp_filepath[len(temp_filepath)-1]
+		donepath := fmt.Sprintf("%v%v", os.Getenv("DONE_DIRECTORY"), filename)
+
+		err = os.Rename(filepath, donepath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	}
 }
 
