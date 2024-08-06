@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -11,32 +12,29 @@ import (
 	"spotify-relation/source"
 	"strings"
 
+	"cloud.google.com/go/storage"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
+
 	_ "github.com/lib/pq"
 	// _ "github.com/mattn/go-sqlite3"
 )
 
-func main() {
-
+func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	jsonFiles, err := ListAllJson(os.Getenv("LANDING_DIRECTORY"))
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	for _, filename := range jsonFiles {
-		fmt.Printf("%v\n", filename)
-	}
+	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "credential/slothpete7773-warehouse.json")
+}
 
+func main() {
 	// DB: Sqlite3
-	db, err := sqlx.Open("sqlite3", "./spotify_data.db?mode=rwc")
+	// db, err := sqlx.Open("sqlite3", "./spotify_data.db?mode=rwc")
 	// DB: Postgres
-	// dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", os.Getenv("PG_USERNAME"), os.Getenv("PG_PASSWORD"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_DATABASE"))
-	// db, err := sqlx.Open("postgres", dsn)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", os.Getenv("PG_USERNAME"), os.Getenv("PG_PASSWORD"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_DATABASE"))
+	db, err := sqlx.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -44,6 +42,16 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	migrate()
+
+	projectId := "slothpete7773-warehouse"
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		log.Fatal("Failed to create client: %v", err)
+	}
+	defer client.Close()
+	bucketName := "spotify_recently_played_slothpete7773"
+	storageClient := repository.NewStorageGCP(client, projectId, bucketName, "spotify-recently-played/")
 
 	// artistRepository := repository.NewArtistRepositorySQLiteDB(db)
 	artistRepository := repository.NewArtistRepositorySQLitePgDB(db)
@@ -64,6 +72,11 @@ func main() {
 	// activityRepository := repository.NewActivityRepositoryDB(db)
 	activityRepository := repository.NewActivityRepositoryPgDB(db)
 	_ = activityRepository
+
+	jsonFiles, err := ListAllJson(os.Getenv("LANDING_DIRECTORY"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for _, filepath := range jsonFiles {
 
@@ -128,9 +141,12 @@ func main() {
 
 		temp_filepath := strings.Split(filepath, "/")
 		filename := temp_filepath[len(temp_filepath)-1]
-		donepath := fmt.Sprintf("%v%v", os.Getenv("DONE_DIRECTORY"), filename)
 
-		err = os.Rename(filepath, donepath)
+		storageClient.UploadFile(filepath, filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = os.Remove(filepath)
 		if err != nil {
 			log.Fatal(err)
 		}

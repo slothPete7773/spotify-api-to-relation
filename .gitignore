@@ -3,3 +3,4 @@
 
 # Credential
 .env
+credential/*.json
